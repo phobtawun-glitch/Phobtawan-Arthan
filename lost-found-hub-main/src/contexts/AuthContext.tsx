@@ -54,8 +54,14 @@ export const AuthProvider: React.FC<{children: React.ReactNode;}> = ({ children 
   const [timeLeft, setTimeLeft] = useState(40 * 60);
   const SESSION_SECONDS = 40 * 60;
   const saveSessionExpiry = (timestamp: number) => {
+    console.log('⚠️ SAVE SESSION EXPIRY:', new Date(timestamp));
+    console.trace('ใครเป็นคนเรียก saveSessionExpiry');
+
     localStorage.setItem('sessionExpiresAt', String(timestamp));
-    setTimeLeft(Math.max(0, Math.ceil((timestamp - Date.now()) / 1000)));
+
+    setTimeLeft(
+      Math.max(0, Math.ceil((timestamp - Date.now()) / 1000))
+    );
   };
   const convertMemberToUser = useCallback((memberData: any): User => {
     return {
@@ -127,17 +133,23 @@ export const AuthProvider: React.FC<{children: React.ReactNode;}> = ({ children 
   console.log('AuthContext isLoggedIn =', isLoggedIn);
 
   useEffect(() => {
-    if (!user || isAdmin) return;
-
     const updateCountdown = () => {
       const expiry = Number(localStorage.getItem('sessionExpiresAt'));
-      if (Number.isFinite(expiry) && expiry > 0) {
-        setTimeLeft(Math.max(0, Math.ceil((expiry - Date.now()) / 1000)));
-      }
+
+      const remaining = Math.max(
+        0,
+        Math.ceil((expiry - Date.now()) / 1000)
+      );
+
+      console.log('COUNTDOWN:', remaining);
+
+      setTimeLeft(remaining);
     };
 
     updateCountdown();
+
     const interval = window.setInterval(updateCountdown, 1000);
+
     window.addEventListener('focus', updateCountdown);
     document.addEventListener('visibilitychange', updateCountdown);
 
@@ -146,7 +158,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode;}> = ({ children 
       window.removeEventListener('focus', updateCountdown);
       document.removeEventListener('visibilitychange', updateCountdown);
     };
-  }, [user, isAdmin]);
+  }, []);
 
   useEffect(() => {
     if (
